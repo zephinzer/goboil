@@ -123,9 +123,14 @@ To publish the production image, use `make dkpublish`.
 To publish the development image, use `make dkpublish.dev`.
 
 # Methodology
+
 ## Dockerfile
+
 The Dockerfile is split into three build stages:
 
 1. **development**: in this stage, development dependencies and convenience tools are available. When built, this image contains the source code only without binaries. This image works for files being mounted onto the directory at `/go/src/${PROJECT_NAME}` where `${PROJECT_NAME}` will default to the name of your host directory. This eliminates the need for a valid `GOPATH` on the host machine.
 1. **compile**: this stage includes everything from **development** and includes the binary. Useful for debugging the production environment.
 1. **production**: this stage contains only production level stuff like your binary. No development convenience tools or dependencies are here and permissions are restricted.
+
+# License
+This project is licensed under the permissive MIT license. See [LICENSE](./LICENSE) for the full text.
