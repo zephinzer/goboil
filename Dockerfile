@@ -7,18 +7,18 @@ ARG PROJECT_NAME="app"
 ARG APK=""
 # due dilligence
 RUN apk update --no-cache
-# system dependencies for developer happiness
-RUN apk add --no-cache bash jq
 # system dependencies for `go get`
 RUN apk add --no-cache git curl
-# system dependencies for `go test`
-RUN apk add --no-cache gcc libc-dev python
-# system dependencies for production parity
-RUN apk add --no-cache ca-certificates ${APK}
 # installs realize for server live-reloading
 RUN go get -v github.com/oxequa/realize
 # installs dep for dependency management
 RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+# system dependencies for `go test`
+RUN apk add --no-cache gcc libc-dev python
+# system dependencies for production parity
+RUN apk add --no-cache ca-certificates ${APK}
+# system dependencies for developer happiness
+RUN apk add --no-cache bash jq ncurses
 # create the caching directories for golang/dep
 RUN mkdir -p /.cache/go-build && chmod 777 -R /.cache
 # sets the working directory to a valid GOPATH
@@ -27,6 +27,10 @@ WORKDIR /go/src/${PROJECT_NAME}
 COPY ./.scripts/auto-run.py /bin/autorun-tests
 # assign execution permissions to autorun-tests
 RUN chmod +x /bin/autorun-tests
+# add convenience scripts
+COPY ./.scripts/.bash_profile /root/.bash_profile
+# assign execution permissions to the .bash_profile
+RUN chmod +x /root/.bash_profile
 
 # for use in the binary generating process
 # this image will contain both the source code and the binaries

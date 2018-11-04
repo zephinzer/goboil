@@ -1,4 +1,5 @@
 .cache
 coverage
+goboil
 vendor
 Makefile.properties

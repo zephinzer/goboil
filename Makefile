@@ -1,5 +1,5 @@
-DOCKER_REGISTRY=docker.io
-DOCKER_NAMESPACE=zephinzer
+include Makefile.properties
+
 PROJECT_NAME=$(notdir $(CURDIR))
 
 # http://patorjk.com/software/taag/#p=display&h=2&f=Small&t=golang
@@ -22,10 +22,15 @@ PROJECT_NAME=$(notdir $(CURDIR))
 #
 # build 				- generates the binary using a docker image
 # build.local 	- generates the binary using native go
-# dkbuild.dev 	- generates a development docker image
-# dkbuild.prd 	- generates a production docker image
 # dep 					- runs the dep command in a docker image
 # dep.local 		- runs the dep command using native dep
+# dkbuild.dev 	- generates a development docker image
+# dkbuild.prd 	- generates a production docker image
+# dkbuild 			- alias for dkbuild.prd
+# dkpublish.dev - publishes the development docker image
+# dkpublish.prd - publishes production docker image
+# dkpublish 		- alias for dkpublish.prd
+# shell					- creates a shell as the root user into a running development container
 # start 				- starts the application in development mode using a docker image
 # start.local 	- starts the application in development mode using native go
 # test					- runs the tests using a docker image
@@ -34,6 +39,8 @@ PROJECT_NAME=$(notdir $(CURDIR))
 # testc.local		- runs the tests and outputs coverage info using native go
 # testw					- runs the tests with live-reloading of tests using a docker image
 # testw.local		- runs the tests with live-reloading of tests on the local box
+# version.get		- retrieves the current version from the git tags
+# version.bump	- bumps the application version using git tags
 
 build: dkbuild.dev
 	docker run \
@@ -47,33 +54,6 @@ build: dkbuild.dev
 
 build.local:
 	@GOPATH="$$(pwd)" go build
-
-dkbuild:
-	@$(MAKE) dkbuild.prd
-
-dkbuild.dev:
-	-@mkdir -p $(CURDIR)/.cache/go-build
-	@docker build \
-		--file $(CURDIR)/Dockerfile \
-		--target development \
-		--tag $(PROJECT_NAME):dev-latest .
-
-dkbuild.prd:
-	@docker build \
-		--file $(CURDIR)/Dockerfile \
-		--target production \
-		--tag $(PROJECT_NAME):latest .
-
-dkpublish:
-	@$(MAKE) dkpublish.prd
-
-dkpublish.dev: dkbuild.dev
-	@docker tag $(PROJECT_NAME):latest $(DOCKER_NAMESPACE)/$(PROJECT_NAME):dev-latest
-	@docker push $(DOCKER_NAMESPACE)/$(PROJECT_NAME):dev-latest
-
-dkpublish.prd: dkbuild.prd
-	@docker tag $(PROJECT_NAME):latest $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(PROJECT_NAME):latest
-	@docker push $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(PROJECT_NAME):latest
 
 dep: dkbuild.dev
 	@if [ -z "${ARGS}" ]; then \
@@ -103,27 +83,76 @@ dep.local:
 		&& dep ${ARGS}
 	-@rm -rf ${_GOPATH}/src/${PROJECT_NAME}
 
+dkbuild:
+	@$(MAKE) dkbuild.prd
+
+dkbuild.dev:
+	-@mkdir -p $(CURDIR)/.cache/go-build
+	@docker build \
+		--file $(CURDIR)/Dockerfile \
+		--target development \
+		--tag $(PROJECT_NAME):dev-latest .
+
+dkbuild.prd:
+	@docker build \
+		--file $(CURDIR)/Dockerfile \
+		--target production \
+		--tag $(PROJECT_NAME):latest .
+
+dkpublish:
+	@$(MAKE) dkpublish.prd
+
+dkpublish.dev: dkbuild.dev
+	@if [ -z "$(DOCKER_IMAGE)" ]; then \
+		$(MAKE) log.info MSG="Publishing $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(PROJECT_NAME):dev-latest..."; \
+		$(MAKE) log.warn MSG="  (hit ctrl+c to stop this from happening)"; \
+		docker tag $(PROJECT_NAME):dev-latest $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(PROJECT_NAME):dev-latest; \
+		docker push $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(PROJECT_NAME):dev-latest; \
+	else \
+		$(MAKE) log.info MSG="Publishing $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_IMAGE):dev-latest..."; \
+		$(MAKE) log.warn MSG="  (hit ctrl+c to stop this from happening)"; \
+		docker tag $(PROJECT_NAME):dev-latest $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_IMAGE):dev-latest; \
+		docker push $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_IMAGE):dev-latest; \
+	fi
+
+dkpublish.prd: dkbuild.prd
+	@if [ -z "$(DOCKER_IMAGE)" ]; then \
+		$(MAKE) log.info MSG="Publishing $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(PROJECT_NAME):dev-latest..."; \
+		$(MAKE) log.warn MSG="  (hit ctrl+c to stop this from happening)"; \
+		docker tag $(PROJECT_NAME):latest $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(PROJECT_NAME):latest; \
+		docker push $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(PROJECT_NAME):latest; \
+	else \
+		$(MAKE) log.info MSG="Publishing $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_IMAGE):latest..."; \
+		$(MAKE) log.warn MSG="  (hit ctrl+c to stop this from happening)"; \
+		docker tag $(PROJECT_NAME):latest $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_IMAGE):latest; \
+		docker push $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_IMAGE):latest; \
+	fi
+
+shell:
+	docker exec  -u root -it $(PROJECT_NAME)-dev /bin/bash -l
+
 start:
 	-@touch $(CURDIR)/.env
-	-@$(eval ENV_PORT=$(shell cat $(CURDIR)/.env | grep 'PORT' | cut -f 2 -d '='));
+	-@$(eval ENV_PORT=$(shell cat $(CURDIR)/.env | grep 'PORT' | cut -f 2 -d '='))
 	@if [ -z "${PORT}" ]; then \
 		if [ -z "${ENV_PORT}" ]; then \
-			$(MAKE) log.info MSG="PORT not found - setting PORT to 8080"; \
 			$(MAKE) start._cmd PORT=8080; \
 		else \
-			$(MAKE) log.info MSG="PORT was set to $(ENV_PORT)"; \
 			$(MAKE) start._cmd PORT=$(ENV_PORT); \
 		fi \
 	else \
-		$(MAKE) log.info MSG="PORT was set to $(PORT)"; \
 		$(MAKE) start._cmd PORT=$(PORT); \
 	fi
+
+start.local:
+	-@realize start --run main.go
 
 start._cmd: dkbuild.dev
 	-@if [ -z "${PORT}" ]; then \
 		$(MAKE) log.error MSG='"PORT" parameter not specified.'; \
 		exit 1; \
 	else \
+		$(MAKE) log.info MSG="PORT was set to ${PORT}"; \
 		docker stop $(PROJECT_NAME)-dev; \
 		docker rm $(PROJECT_NAME)-dev; \
 		docker run \
@@ -139,9 +168,6 @@ start._cmd: dkbuild.dev
 			$(PROJECT_NAME):dev-latest \
 			start --no-config --run main.go; \
 	fi
-
-start.local:
-	-@realize start --run main.go
 
 test: dkbuild.dev
 	-@docker stop $(PROJECT_NAME)-test
@@ -195,11 +221,14 @@ testw: dkbuild.dev
 testw.local:
 	-@python ./.test/auto-run.py
 
-version:
-	if [ -z "${BUMP}" ]; then
-		docker run -v "$(pwd):/app" zephinzer/vtscripts:latest iterate patch -i;
-	else
-		docker run -v "$(pwd):/app" zephinzer/vtscripts:latest iterate ${BUMP} -i; \
+version.get:
+	@docker run -v "$$(pwd):/app" zephinzer/vtscripts:latest get-latest -q
+
+version.bump:
+	@if [ -z "${BUMP}" ]; then \
+		docker run -v "$$(pwd):/app" zephinzer/vtscripts:latest iterate patch -i; \
+	else \
+		docker run -v "$$(pwd):/app" zephinzer/vtscripts:latest iterate ${BUMP} -i; \
 	fi
 
 # src: http://patorjk.com/software/taag/#p=display&h=2&f=Small&t=pretty%20logging
