@@ -44,10 +44,10 @@ jobs:
       - echo "DOCKER_REGISTRY=${DOCKER_REGISTRY}" > ./Makefile.properties
       - echo "DOCKER_NAMESPACE=${DOCKER_NAMESPACE}" >> ./Makefile.properties
       - echo "DOCKER_IMAGE=${DOCKER_IMAGE}" >> ./Makefile.properties
-      - git tag --list
       - git remote set-url origin "$(printf -- "${REPO_HTTPS_URL}" | sed -e "s|https://|https://${REPO_USERNAME}:${REPO_PERSONAL_ACCESS_TOKEN}@|g")"
+      - git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
       - git fetch origin
-      - git checkout -b master origin/master
+      - git checkout master origin/master
       - git tag --list
       - git branch --contains ${TRAVIS_TAG}
       - 'git branch --contains ${TRAVIS_TAG} | grep master'
