@@ -15,6 +15,7 @@ services:
 jobs:
   include:
     - stage: test and build
+      if: tag IS NOT present
       script:
       - set -x
       - if [ -z "${DOCKER_REGISTRY}" ] || [ -z "${DOCKER_NAMESPACE}" ] || [ -z "${DOCKER_IMAGE}" ]; then exit 1; fi;
@@ -36,8 +37,15 @@ jobs:
       - make version.bump
       - git push --tags
     - stage: publish
-      if: (tag IS present) AND (branch = master)
+      if: tag IS present
       script:
-      - docker login "${DOCKER_REGISTRY}" -u "${DOCKER_REGISTRY_USERNAME}" -p "${DOCKER_REGISTRY_PASSWORD}" \
-      - make dkpublish VERSION="${TRAVIS_TAG}" \
-      - docker logout
+      - set -x
+      - if [ -z "${DOCKER_REGISTRY}" ] || [ -z "${DOCKER_NAMESPACE}" ] || [ -z "${DOCKER_IMAGE}" ]; then exit 1; fi;
+      - echo "DOCKER_REGISTRY=${DOCKER_REGISTRY}" > ./Makefile.properties
+      - echo "DOCKER_NAMESPACE=${DOCKER_NAMESPACE}" >> ./Makefile.properties
+      - echo "DOCKER_IMAGE=${DOCKER_IMAGE}" >> ./Makefile.properties
+      - |
+        git branch --contains ${TRAVIS_TAG} | grep -l master \
+          && docker login "${DOCKER_REGISTRY}" -u "${DOCKER_REGISTRY_USERNAME}" -p "${DOCKER_REGISTRY_PASSWORD}" \
+          && make dkpublish VERSION="${TRAVIS_TAG}" \
+          && docker logout
