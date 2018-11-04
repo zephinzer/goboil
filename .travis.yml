@@ -13,6 +13,6 @@ script:
 # build the binary
 - make build
 # publish the image
-- docker login "${DOCKER_REGISTRY}" -u "${DH_USERNAME}" -p "${DH_PASSWORD}"
+- docker login "${DOCKER_REGISTRY}" -u "${DOCKER_REGISTRY_USERNAME}" -p "${DOCKER_REGISTRY_PASSWORD}"
 - make dkpublish
 - docker logout
