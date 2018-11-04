@@ -44,8 +44,7 @@ jobs:
       - echo "DOCKER_REGISTRY=${DOCKER_REGISTRY}" > ./Makefile.properties
       - echo "DOCKER_NAMESPACE=${DOCKER_NAMESPACE}" >> ./Makefile.properties
       - echo "DOCKER_IMAGE=${DOCKER_IMAGE}" >> ./Makefile.properties
-      - |
-        git branch --contains ${TRAVIS_TAG} | grep -l master \
-          && docker login "${DOCKER_REGISTRY}" -u "${DOCKER_REGISTRY_USERNAME}" -p "${DOCKER_REGISTRY_PASSWORD}" \
-          && make dkpublish VERSION="${TRAVIS_TAG}" \
-          && docker logout
+      - git branch --contains ${TRAVIS_TAG} | grep -l master
+      - docker login "${DOCKER_REGISTRY}" -u "${DOCKER_REGISTRY_USERNAME}" -p "${DOCKER_REGISTRY_PASSWORD}"
+      - make dkpublish VERSION="${TRAVIS_TAG}"
+      - docker logout
