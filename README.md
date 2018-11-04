@@ -125,8 +125,8 @@ The following environment variables should be set in your continuous integration
 
 The provided `./.travis.yml` file provides a simple build > test > release > publish cycle. To start using this, follow the steps below:
 
-1. Create a personal access token with `repo` access on GitHub (Settings > Developer settings > Personal access tokens > Generate new token)
-1. Go to Travis and enable your repository (`+` sign beside My Repositories)
+1. Create a personal access token with `repo` access on GitHub (**Settings** > **Developer settings** > **Personal access tokens** > **Generate new token**)
+1. Go to Travis and enable your repository (**+** sign beside **My Repositories**)
 1. Click on **More options** > **Settings** and add the environment variables as stated above
 
 
