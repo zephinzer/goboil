@@ -26,6 +26,8 @@ jobs:
       - git checkout master
       - make version.bump
       - git push --tags
+    - stage: publish
+      if: tag = true
       - docker login "${DOCKER_REGISTRY}" -u "${DOCKER_REGISTRY_USERNAME}" -p "${DOCKER_REGISTRY_PASSWORD}"
-      - make dkpublish
+      - make dkpublish VERSION="${TRAVIS_TAG}"
       - docker logout

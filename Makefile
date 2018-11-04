@@ -100,28 +100,35 @@ dkbuild.prd:
 		--tag $(PROJECT_NAME):latest .
 
 dkpublish:
-	@$(MAKE) dkpublish.prd
+	@$(MAKE) dkpublish.prd VERSION=${VERSION}
 
 dkpublish.dev: dkbuild.dev
 	@if [ -z "$(DOCKER_IMAGE)" ]; then \
-		$(MAKE) dkpublish._cmd IMAGE_NAME=$(PROJECT_NAME) TAG=latest-dev POSTFIX=-dev; \
+		$(MAKE) dkpublish._cmd IMAGE_NAME=$(PROJECT_NAME) VERSION=${VERSION} TAG=latest-dev POSTFIX=-dev; \
 	else \
-		$(MAKE) dkpublish._cmd IMAGE_NAME=$(PROJECT_NAME) TAG=latest-dev POSTFIX=-dev; \
+		$(MAKE) dkpublish._cmd IMAGE_NAME=$(PROJECT_NAME) VERSION=${VERSION} TAG=latest-dev POSTFIX=-dev; \
 	fi
 
 dkpublish.prd: dkbuild.prd
 	@if [ -z "$(DOCKER_IMAGE)" ]; then \
-		$(MAKE) dkpublish._cmd IMAGE_NAME=$(PROJECT_NAME) TAG=latest; \
+		$(MAKE) dkpublish._cmd IMAGE_NAME=$(PROJECT_NAME) VERSION=${VERSION} TAG=latest; \
 	else \
-		$(MAKE) dkpublish._cmd IMAGE_NAME=$(DOCKER_IMAGE) TAG=latest; \
+		$(MAKE) dkpublish._cmd IMAGE_NAME=$(DOCKER_IMAGE) VERSION=${VERSION} TAG=latest; \
 	fi
 
 dkpublish._cmd:
-	$(eval VERSION=$(shell docker run -v "$(CURDIR):/app" zephinzer/vtscripts:latest get-latest -q))
-	$(MAKE) log.info MSG="Publishing $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/${IMAGE_NAME}:(${TAG}|$(VERSION))${POSTFIX}..."; \
-	$(MAKE) log.warn MSG="  (hit ctrl+c within 3 seconds to stop this from happening)"; sleep 3; \
-	$(MAKE) dkpublish._tagandpush FROM="$(PROJECT_NAME):${TAG}${POSTFIX}" TO="$(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/${IMAGE_NAME}:${TAG}${POSTFIX}"
-	$(MAKE) dkpublish._tagandpush FROM="$(PROJECT_NAME):${TAG}${POSTFIX}" TO="$(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/${IMAGE_NAME}:$(VERSION)${POSTFIX}"
+	$(eval GIT_TAG_VERSION=$(shell docker run -v "$(CURDIR):/app" zephinzer/vtscripts:latest get-latest -q))
+	if [ -z "${VERSION}" ]; then \
+		$(MAKE) log.info MSG="Publishing $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/${IMAGE_NAME}:(${TAG}|$(GIT_TAG_VERSION))${POSTFIX}..."; \
+		$(MAKE) log.warn MSG="  (hit ctrl+c within 3 seconds to stop this from happening)"; sleep 3; \
+		$(MAKE) dkpublish._tagandpush FROM="$(PROJECT_NAME):${TAG}${POSTFIX}" TO="$(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/${IMAGE_NAME}:${TAG}${POSTFIX}"; \
+		$(MAKE) dkpublish._tagandpush FROM="$(PROJECT_NAME):${TAG}${POSTFIX}" TO="$(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/${IMAGE_NAME}:$(GIT_TAG_VERSION)${POSTFIX}"; \
+	else \
+		$(MAKE) log.info MSG="Publishing $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/${IMAGE_NAME}:(${TAG}|${VERSION})${POSTFIX}..."; \
+		$(MAKE) log.warn MSG="  (hit ctrl+c within 3 seconds to stop this from happening)"; sleep 3; \
+		$(MAKE) dkpublish._tagandpush FROM="$(PROJECT_NAME):${TAG}${POSTFIX}" TO="$(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/${IMAGE_NAME}:${TAG}${POSTFIX}"; \
+		$(MAKE) dkpublish._tagandpush FROM="$(PROJECT_NAME):${TAG}${POSTFIX}" TO="$(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/${IMAGE_NAME}:${VERSION}${POSTFIX}"; \
+	fi
 
 dkpublish._tagandpush:
 	docker tag ${FROM} ${TO}
