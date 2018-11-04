@@ -1,7 +1,7 @@
 .cache
+.gitignore
 coverage
 vendor
 Dockerfile
 Makefile
-.gitignore
 README.md

@@ -2,17 +2,30 @@ sudo: required
 language: go
 services:
 - docker
-script:
-- set -x
-- if [ -z "${DOCKER_REGISTRY}" ] || [ -z "${DOCKER_NAMESPACE}" ] || [ -z "${DOCKER_IMAGE}" ]; then exit 1; fi;
-- echo "DOCKER_REGISTRY=${DOCKER_REGISTRY}" > ./Makefile.properties
-- echo "DOCKER_NAMESPACE=${DOCKER_NAMESPACE}" >> ./Makefile.properties
-- echo "DOCKER_IMAGE=${DOCKER_IMAGE}" >> ./Makefile.properties
-# test with coverage
-- make testc
-# build the binary
-- make build
-# publish the image
-- docker login "${DOCKER_REGISTRY}" -u "${DOCKER_REGISTRY_USERNAME}" -p "${DOCKER_REGISTRY_PASSWORD}"
-- make dkpublish
-- docker logout
+jobs:
+  include:
+    - stage: test and build
+      script:
+      - set -x
+      - if [ -z "${DOCKER_REGISTRY}" ] || [ -z "${DOCKER_NAMESPACE}" ] || [ -z "${DOCKER_IMAGE}" ]; then exit 1; fi;
+      - echo "DOCKER_REGISTRY=${DOCKER_REGISTRY}" > ./Makefile.properties
+      - echo "DOCKER_NAMESPACE=${DOCKER_NAMESPACE}" >> ./Makefile.properties
+      - echo "DOCKER_IMAGE=${DOCKER_IMAGE}" >> ./Makefile.properties
+      - make testc
+      - make build
+    - stage: release
+      if: branch = master
+      script:
+      - set -x
+      - if [ -z "${DOCKER_REGISTRY}" ] || [ -z "${DOCKER_NAMESPACE}" ] || [ -z "${DOCKER_IMAGE}" ]; then exit 1; fi;
+      - echo "DOCKER_REGISTRY=${DOCKER_REGISTRY}" > ./Makefile.properties
+      - echo "DOCKER_NAMESPACE=${DOCKER_NAMESPACE}" >> ./Makefile.properties
+      - echo "DOCKER_IMAGE=${DOCKER_IMAGE}" >> ./Makefile.properties
+      # version tag the repo
+      - git remote set-url origin "$(printf -- "${REPO_HTTPS_URL}" | sed -e "s|https://|https://${REPO_USERNAME}:${REPO_PERSONAL_ACCESS_TOKEN}@|g")"
+      - git checkout master
+      - make version.bump
+      - git push --tags
+      - docker login "${DOCKER_REGISTRY}" -u "${DOCKER_REGISTRY_USERNAME}" -p "${DOCKER_REGISTRY_PASSWORD}"
+      - make dkpublish
+      - docker logout

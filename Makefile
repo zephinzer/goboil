@@ -49,7 +49,7 @@ build: dkbuild.dev
 		-v $(CURDIR):/go/src/$(PROJECT_NAME) \
 		-u $$(id -u) \
 		--entrypoint=go \
-		$(PROJECT_NAME):dev-latest \
+		$(PROJECT_NAME):latest-dev \
 		build
 
 build.local:
@@ -66,7 +66,7 @@ dep: dkbuild.dev
 			-v $(CURDIR)/.cache:/.cache \
 			-u $$(id -u) \
 			--entrypoint=dep \
-			$(PROJECT_NAME):dev-latest \
+			$(PROJECT_NAME):latest-dev \
 			${ARGS}; \
 	fi
 
@@ -91,7 +91,7 @@ dkbuild.dev:
 	@docker build \
 		--file $(CURDIR)/Dockerfile \
 		--target development \
-		--tag $(PROJECT_NAME):dev-latest .
+		--tag $(PROJECT_NAME):latest-dev .
 
 dkbuild.prd:
 	@docker build \
@@ -104,29 +104,28 @@ dkpublish:
 
 dkpublish.dev: dkbuild.dev
 	@if [ -z "$(DOCKER_IMAGE)" ]; then \
-		$(MAKE) log.info MSG="Publishing $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(PROJECT_NAME):dev-latest..."; \
-		$(MAKE) log.warn MSG="  (hit ctrl+c to stop this from happening)"; \
-		docker tag $(PROJECT_NAME):dev-latest $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(PROJECT_NAME):dev-latest; \
-		docker push $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(PROJECT_NAME):dev-latest; \
+		$(MAKE) dkpublish._cmd IMAGE_NAME=$(PROJECT_NAME) TAG=latest-dev POSTFIX=-dev; \
 	else \
-		$(MAKE) log.info MSG="Publishing $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_IMAGE):dev-latest..."; \
-		$(MAKE) log.warn MSG="  (hit ctrl+c to stop this from happening)"; \
-		docker tag $(PROJECT_NAME):dev-latest $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_IMAGE):dev-latest; \
-		docker push $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_IMAGE):dev-latest; \
+		$(MAKE) dkpublish._cmd IMAGE_NAME=$(PROJECT_NAME) TAG=latest-dev POSTFIX=-dev; \
 	fi
 
 dkpublish.prd: dkbuild.prd
 	@if [ -z "$(DOCKER_IMAGE)" ]; then \
-		$(MAKE) log.info MSG="Publishing $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(PROJECT_NAME):dev-latest..."; \
-		$(MAKE) log.warn MSG="  (hit ctrl+c to stop this from happening)"; \
-		docker tag $(PROJECT_NAME):latest $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(PROJECT_NAME):latest; \
-		docker push $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(PROJECT_NAME):latest; \
+		$(MAKE) dkpublish._cmd IMAGE_NAME=$(PROJECT_NAME) TAG=latest; \
 	else \
-		$(MAKE) log.info MSG="Publishing $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_IMAGE):latest..."; \
-		$(MAKE) log.warn MSG="  (hit ctrl+c to stop this from happening)"; \
-		docker tag $(PROJECT_NAME):latest $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_IMAGE):latest; \
-		docker push $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_IMAGE):latest; \
+		$(MAKE) dkpublish._cmd IMAGE_NAME=$(DOCKER_IMAGE) TAG=latest; \
 	fi
+
+dkpublish._cmd:
+	$(eval VERSION=$(shell docker run -v "$(CURDIR):/app" zephinzer/vtscripts:latest get-latest -q))
+	$(MAKE) log.info MSG="Publishing $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/${IMAGE_NAME}:(${TAG}|$(VERSION))${POSTFIX}..."; \
+	$(MAKE) log.warn MSG="  (hit ctrl+c within 3 seconds to stop this from happening)"; sleep 3; \
+	$(MAKE) dkpublish._tagandpush FROM="$(PROJECT_NAME):${TAG}${POSTFIX}" TO="$(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/${IMAGE_NAME}:${TAG}${POSTFIX}"
+	$(MAKE) dkpublish._tagandpush FROM="$(PROJECT_NAME):${TAG}${POSTFIX}" TO="$(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/${IMAGE_NAME}:$(VERSION)${POSTFIX}"
+
+dkpublish._tagandpush:
+	docker tag ${FROM} ${TO}
+	docker push ${TO}
 
 shell:
 	docker exec  -u root -it $(PROJECT_NAME)-dev /bin/bash -l
@@ -165,7 +164,7 @@ start._cmd: dkbuild.dev
 			-u $$(id -u) \
 			--entrypoint=realize \
 			--name $(PROJECT_NAME)-dev \
-			$(PROJECT_NAME):dev-latest \
+			$(PROJECT_NAME):latest-dev \
 			start --no-config --run main.go; \
 	fi
 
@@ -180,7 +179,7 @@ test: dkbuild.dev
 		-u $$(id -u) \
 		--entrypoint=go \
 		--name $(PROJECT_NAME)-test \
-		$(PROJECT_NAME):dev-latest \
+		$(PROJECT_NAME):latest-dev \
 		test -v
 
 test.local:
@@ -198,7 +197,7 @@ testc: dkbuild.dev
 		-u $$(id -u) \
 		--entrypoint=go \
 		--name $(PROJECT_NAME)-test \
-		$(PROJECT_NAME):dev-latest \
+		$(PROJECT_NAME):latest-dev \
 		test -v -coverprofile=coverage/coverage.out
 
 testc.local:
@@ -216,7 +215,7 @@ testw: dkbuild.dev
 		-u $$(id -u) \
 		--entrypoint=autorun-tests \
 		--name $(PROJECT_NAME)-test \
-		$(PROJECT_NAME):dev-latest
+		$(PROJECT_NAME):latest-dev
 
 testw.local:
 	-@python ./.test/auto-run.py
