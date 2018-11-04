@@ -47,7 +47,7 @@ jobs:
       - git remote set-url origin "$(printf -- "${REPO_HTTPS_URL}" | sed -e "s|https://|https://${REPO_USERNAME}:${REPO_PERSONAL_ACCESS_TOKEN}@|g")"
       - git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
       - git fetch origin
-      - git checkout master origin/master
+      - git checkout master
       - git tag --list
       - git branch --contains ${TRAVIS_TAG}
       - 'git branch --contains ${TRAVIS_TAG} | grep master'
