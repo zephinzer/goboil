@@ -36,8 +36,10 @@ jobs:
       - make version.bump
       - git push --tags
     - stage: publish
-      if: (tag IS present) AND (branch = master)
+      if: tag IS present
       script:
-      - docker login "${DOCKER_REGISTRY}" -u "${DOCKER_REGISTRY_USERNAME}" -p "${DOCKER_REGISTRY_PASSWORD}"
-      - make dkpublish VERSION="${TRAVIS_TAG}"
-      - docker logout
+      - |
+        git branch --contains ${TRAVIS_TAG} | grep -l master \
+          && docker login "${DOCKER_REGISTRY}" -u "${DOCKER_REGISTRY_USERNAME}" -p "${DOCKER_REGISTRY_PASSWORD}" \
+          && make dkpublish VERSION="${TRAVIS_TAG}" \
+          && docker logout
