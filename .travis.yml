@@ -1,0 +1,18 @@
+sudo: required
+language: go
+services:
+- docker
+script:
+- set -x
+- if [ -z "${DOCKER_REGISTRY}" ] || [ -z "${DOCKER_NAMESPACE}" ] || [ -z "${DOCKER_IMAGE}" ]; then exit 1; fi;
+- echo "DOCKER_REGISTRY=${DOCKER_REGISTRY}" > ./Makefile.properties
+- echo "DOCKER_NAMESPACE=${DOCKER_NAMESPACE}" >> ./Makefile.properties
+- echo "DOCKER_IMAGE=${DOCKER_IMAGE}" >> ./Makefile.properties
+# test with coverage
+- make testc
+# build the binary
+- make build
+# publish the image
+- docker login "${DOCKER_REGISTRY}" -u "${DH_USERNAME}" -p "${DH_PASSWORD}"
+- make dkpublish
+- docker logout
