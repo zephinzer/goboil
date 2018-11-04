@@ -1,6 +1,8 @@
 # Golang Build Tooling Boilerplate
 Opinionated build tooling boilerplate for developing Golang applications with.
 
+[![Build Status](https://travis-ci.org/zephinzer/goboil.svg?branch=master)](https://travis-ci.org/zephinzer/goboil)
+
 # Scope
 ## Non-Technical (Value Propositions)
 - Uses Docker images to eliminate development machine differences
