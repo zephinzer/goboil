@@ -20,7 +20,7 @@ Opinionated build tooling boilerplate for developing Golang applications with.
 - [x] Compile binary
 - [x] Versioning capabilities
 - [x] Create production Docker image bundle
-- [ ] Travis integration
+- [x] Travis integration
 - [ ] GitLab integration
 - [ ] CodeClimate integration
 - [ ] SonarQube integration
@@ -105,6 +105,30 @@ To bump the **patch** version, use `make version.bump`
 To bump the **minor** version, use `make version.bump BUMP=minor`
 
 To bump the **major** version, use `make version.bump BUMP=major`
+
+## Continuous Integration
+
+The following environment variables should be set in your continuous integration environment for this to work:
+
+| Variable Name | Value Description |
+| --- | --- |
+| DOCKER_IMAGE | the name of the docker image  - namespace/THIS:tag - this defaults to `goboil` (this package) |
+| DOCKER_NAMESPACE | the namespace of the docker image - THIS/image_name:tag - this defaults to `zephinezr` (mine) |
+| DOCKER_REGISTRY | the registry of the docker image - THIS/namespace/image_name:tag - set to `docker.io` for Docker Hub |
+| DOCKER_REGISTRY_PASSWORD | password for your docker registry |
+| DOCKER_REGISTRY_USERNAME | username for your docker registry |
+| REPO_HTTPS_URL | your source control repository url in HTTPS format - this will be rebuit into `https://${USERNAME}:${TOKEN}@rest.of/your/repo.git` |
+| REPO_PERSONAL_ACCESS_TOKEN | your personal access token to your repository for pushing tags |
+| REPO_USERNAME | your username to your repository for pushing tags |
+
+### Travis
+
+The provided `./.travis.yml` file provides a simple build > test > release > publish cycle. To start using this, follow the steps below:
+
+1. Create a personal access token with `repo` access on GitHub (Settings > Developer settings > Personal access tokens > Generate new token)
+1. Go to Travis and enable your repository (`+` sign beside My Repositories)
+1. Click on **More options** > **Settings** and add the environment variables as stated above
+
 
 ## Containerisation
 
