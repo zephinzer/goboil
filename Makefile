@@ -225,7 +225,7 @@ testw: dkbuild.dev
 		$(PROJECT_NAME):latest-dev
 
 testw.local:
-	-@python ./.test/auto-run.py
+	-@python ./.scripts/auto-run.py
 
 version.get:
 	@docker run -v "$$(pwd):/app" zephinzer/vtscripts:latest get-latest -q
