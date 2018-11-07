@@ -150,7 +150,29 @@ To publish the development image, use `make dkpublish.dev`.
 
 # Methodology
 
-## Dockerfile
+## Live Reloading
+
+Live-reloading of a server allows for a quick feedback cycle which allows developers to experience changes they made in terms of application behaviour. The Realize CLI tool is used to do this for the application code.
+
+For tests, a Python script originally from GoConvey is being used. See the [./.scripts/auto-run.py](./.scripts/auto-run.py) for more information on this.
+
+## Configuration
+
+A `.env` file was chosen to decide the environment which the Docker containers will load upon instantiation. This is the easiest way I know of to inject environment variables into a system, but it has the down-side of having to re-run the `make start` command if an environment variable changes.
+
+A viable alternative is to use a `.yaml` file in development but draw from the environment in production based on the mode set. However, I felt this changes the behaviour of the application based on environment and isn't a clean solution too.
+
+## Quality Assurance
+
+Test coverage is a useful quick-win (but non-essential) metric we can use to estimate technical debt. The default coverage tool is used when `make testc` (run test with coverage) is run.
+
+The standard `go test` is handy enough without any frameworks, so to create a more lightweight setup, no frameworks were added.
+
+## Containerisation
+
+Cloud-native is all the buzz. This boilerplate includes convenience recipes to create an image with your Golang binary to avoid "it works on my machine" issues.
+
+### Dockerfile
 
 The Dockerfile is split into three build stages:
 
