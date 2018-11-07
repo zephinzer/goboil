@@ -69,6 +69,7 @@ dep: dkbuild.dev
 			$(PROJECT_NAME):latest-dev \
 			${ARGS}; \
 	fi
+	-@ln -s vendor src
 
 dep.local:
 	@if [ -z "${ARGS}" ]; then \
@@ -82,6 +83,7 @@ dep.local:
 	@cd ${_GOPATH}/src/${PROJECT_NAME} \
 		&& dep ${ARGS}
 	-@rm -rf ${_GOPATH}/src/${PROJECT_NAME}
+	-@ln -s vendor src
 
 dkbuild:
 	@$(MAKE) dkbuild.prd
