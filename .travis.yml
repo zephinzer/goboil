@@ -23,8 +23,18 @@ jobs:
       - echo "DOCKER_NAMESPACE=${DOCKER_NAMESPACE}" >> ./Makefile.properties
       - echo "DOCKER_IMAGE=${DOCKER_IMAGE}" >> ./Makefile.properties
       - make dep ARGS="ensure -v"
+      - |
+        if ! [ -z "${CC_TEST_REPORTER_ID}" ]; then \
+          go get -v github.com/codeclimate/test-reporter; \
+          test-reporter before-build; \
+        fi
       - make testc
       - make build
+      - |
+        if ! [ -z "${CC_TEST_REPORTER_ID}" ]; then \
+          mv coverage/coverage.out ./c.out; \
+          test-reporter after-build --coverage-input-type gocov --exit-code ${TRAVIS_TEST_RESULT}; \
+        fi
     - stage: release
       if: branch = master
       script:
