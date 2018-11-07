@@ -71,6 +71,7 @@ dep: dkbuild.dev
 			$(PROJECT_NAME):latest-dev \
 			${ARGS}; \
 	fi
+	# this hack is for allowing vscode to identify vendor dependencies based on GOPATH so we have intellisense
 	-@ln -s vendor src
 
 dep.local:
@@ -85,6 +86,7 @@ dep.local:
 	@cd ${_GOPATH}/src/${PROJECT_NAME} \
 		&& dep ${ARGS}
 	-@rm -rf ${_GOPATH}/src/${PROJECT_NAME}
+	# this hack is for allowing vscode to identify vendor dependencies based on GOPATH so we have intellisense
 	-@ln -s vendor src
 
 dkbuild:
