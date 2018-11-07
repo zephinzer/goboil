@@ -1,8 +1,10 @@
+# remember to make a copy of `./sample.properties` as `./Makefile.properties`
 include Makefile.properties
 
+# use the directory name as the project name
 PROJECT_NAME=$(notdir $(CURDIR))
 
-# http://patorjk.com/software/taag/#p=display&h=2&f=Small&t=golang
+# src: http://patorjk.com/software/taag/#p=display&h=2&f=Small&t=golang
 #           _                
 #  __ _ ___| |__ _ _ _  __ _ 
 # / _` / _ \ / _` | ' \/ _` |

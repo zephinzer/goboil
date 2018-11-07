@@ -1,6 +1,15 @@
+# development artifacts
 .cache
-.version
 coverage
-goboil
+
+# dependencies
+pkg
 vendor
+
+# tooling files
 Makefile.properties
+
+# binaries
+## NOTE: change the below to your binary name to avoid pushing your potentially huge binary
+goboil
+## /NOTE

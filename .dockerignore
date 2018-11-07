@@ -1,7 +1,21 @@
+# development artifacts
 .cache
-.gitignore
 coverage
+
+# source control artifacts
+.gitignore
+.gitkeep
+
+# dependencies
+pkg
 vendor
+
+# tooling files
 Dockerfile
 Makefile
 README.md
+
+# binaries
+## NOTE: change the below to your binary name to avoid having a locally built binary
+goboil
+## /NOTE
